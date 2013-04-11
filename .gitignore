@@ -1,0 +1,9 @@
+## Python
+*.pyc
+*.bak
+*.orig
+*.rej
+*~
+dist
+build
+__pycache__
