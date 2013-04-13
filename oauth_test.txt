@@ -1,2 +1,0 @@
-requestsecret
-accesssecret
