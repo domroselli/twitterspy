@@ -1,5 +1,7 @@
 from twitterspy import oauth_factory
 from twitterspy import timeline_json_factory, timeline_pyobj_factory
+from twitterspy import hashtags_factory, media_factory, tweet_factory
+from twitterspy import urls_factory
 from twitterspy import CONSUMER_KEY, CONSUMER_SECRET
 from twitterspy import API_VERSION, API_DOMAIN
 from twitter.api import Twitter
@@ -39,11 +41,47 @@ def test_timeline_json_factory(oauthfile, token, token_secret):
                                 since_id, max_id, include_rts, exclude_replies)
     assert len(timeline) > 0
 
-# function not yet implemented
+def test_tweet_factory(timelinefile):
+    with open(timelinefile, 'r') as f:
+        timeline_json = json.loads(''.join([line for line in f]))
+
+    tweets = [tweet_factory(t) for t in timeline_json]
+    assert tweets and len(tweets) > 0
+
+def test_hashtags_factory(timelinefile):
+    with open(timelinefile, 'r') as f:
+        timeline_json = json.loads(''.join([line for line in f]))
+
+    tweet_id = -1
+    hashtags = [hashtags_factory(t['entities']['hashtags'], tweet_id)
+            for t in timeline_json]
+    assert hashtags and len(hashtags) > 0
+
+def test_media_factory(timelinefile):
+    with open(timelinefile, 'r') as f:
+        timeline_json = json.loads(''.join([line for line in f]))
+
+    tweet_id = -1
+    media = [media_factory(t['entities']['media'], tweet_id)
+            for t in timeline_json if 'media' in t['entities']]
+    assert media and len(media) > 0
+
+def test_urls_factory(timelinefile):
+    with open(timelinefile, 'r') as f:
+        timeline_json = json.loads(''.join([line for line in f]))
+
+    tweet_id = -1
+    urls = [urls_factory(t['entities']['urls'], tweet_id)
+            for t in timeline_json]
+    assert urls and len(urls) > 0
+
 def test_timeline_pyobj_factory(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
     timeline_pyobjs = timeline_pyobj_factory(timeline_json)
-    for t in timeline_pyobjs['tweets']:
-        assert t.lang in ['en','und','id','nl','dl','de','tr','da']
+    assert timeline_pyobjs
+    assert timeline_pyobjs['tweets'] and len(timeline_pyobjs['tweets']) > 0
+    assert timeline_pyobjs['hashtags'] and len(timeline_pyobjs['hashtags']) > 0
+    assert timeline_pyobjs['media'] and len(timeline_pyobjs['media']) > 0
+    assert timeline_pyobjs['urls'] and len(timeline_pyobjs['urls']) > 0

@@ -98,9 +98,9 @@ def media_factory(media_json, tweet_id):
     """Creates a list of Media objects"""
     return [Media(m['display_url'],
                     m['expanded_url'],
-                    m['media_id'],
-                    m['media_id_str'],
-                    m['media_type'],
+                    m['id'],
+                    m['id_str'],
+                    m['type'],
                     m['media_url'],
                     m['media_url_https'],
                     m['source_status_id'],
@@ -113,8 +113,11 @@ def timeline_pyobj_factory(timeline_json):
     Transforms the json into dictionary of lists of Python objects for each
     object discovered
     """
-    pyobjs = {'tweets': [], 'hashtags': [], 'media': [],
-                'urls': [], 'user_mentions': []}
+    pyobjs = {'tweets': [],
+              'hashtags': [],
+              'media': [],
+              'urls': [],
+              'user_mentions': []}
 
     for t in timeline_json:
         tweet = tweet_factory(t)
