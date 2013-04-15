@@ -1,4 +1,6 @@
 from dbinterface import *
+from dbentities import Base
+from dbentities import Hashtag, Media, Tweet, Timeline, Url, User, UserMention
 
 def test_db_session_factory():
     engine_source = 'sqlite:///:memory:'

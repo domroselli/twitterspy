@@ -4,6 +4,7 @@ from twitterspy import CONSUMER_KEY, CONSUMER_SECRET
 from twitterspy import API_VERSION, API_DOMAIN
 from twitter.api import Twitter
 
+import json
 import pytest
 
 def test_oauth_factory(oauthfile, token, token_secret):
@@ -34,15 +35,15 @@ def test_timeline_json_factory(oauthfile, token, token_secret):
     max_id = None
     include_rts = True
     exclude_replies = True
-    timeline = timeline_json_factory(twitter_api, screen_name, tweet_count, 
+    timeline = timeline_json_factory(twitter_api, screen_name, tweet_count,
                                 since_id, max_id, include_rts, exclude_replies)
     assert len(timeline) > 0
 
-# function not yet implemented 
-@pytest.mark.xfail
+# function not yet implemented
 def test_timeline_pyobj_factory(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
     timeline_pyobjs = timeline_pyobj_factory(timeline_json)
-    assert timeline_pyobs['tweets'][0].screen_name == 'dougstanhope'
+    for t in timeline_pyobjs['tweets']:
+        assert t.lang in ['en','und','id','nl','dl','de','tr','da']
