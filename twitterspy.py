@@ -3,6 +3,7 @@ from dbentities import Base, Tweet, Timeline, User
 
 from twitter.oauth import OAuth, write_token_file, read_token_file
 from twitter.oauth_dance import oauth_dance
+from twitter.api import Twitter, TwitterError, TwitterHTTPError
 from sqlalchemy.orm import sessionmaker
 import json
 
@@ -11,6 +12,9 @@ CONSUMER_SECRET = 'MEYTOS97VvlHX7K1rwHPEqVpTSqZ71HtvoK4sVuYk'
 
 API_VERSION = "1.1"
 API_DOMAIN = "api.twitter.com"
+
+USER_LIMIT = 100
+TWEET_LIMIT = 200
 
 def do_oauth_dance(oauth_filename, key, secret):
     """
@@ -151,3 +155,42 @@ def get_all_user_ids(tweets, user_mentions):
             for t in tweets if t.in_reply_to_user_id])
 
     return list(id_set)
+
+def user_json_factory(twitter_api, user_ids):
+    """Gets the User json objects from Twitter for the given user_ids"""
+    users_json = []
+    start = 0
+    length = len(user_ids)
+    end = length if length < USER_LIMIT else USER_LIMIT
+    while start < length:
+        user_json += twitter_api.users.lookup(
+                            user_id=",".join(map(str, user_ids[start:end])))
+        start = end
+        end = end + USER_LIMIT
+    return user_json
+
+def user_pyobjs_factory(user_json):
+    """Creates a list of User python objects for the given json objects"""
+    return [User(u['created_at'],
+                 u['default_profile'],
+                 u['default_profile_image'],
+                 u['description'],
+                 u['favourites_count'],
+                 u['followers_count'],
+                 u['friends_count'],
+                 u['geo_enabled'],
+                 u['is_translator'],
+                 u['lang'],
+                 u['listed_count'],
+                 u['location'],
+                 u['name'],
+                 u['protected'],
+                 u['screen_name'],
+                 u['statuses_count'],
+                 u['time_zone'],
+                 u['url'],
+                 u['id'],
+                 u['id_str'],
+                 u['utc_offset'],
+                 u['verified'])
+            for u in user_json]

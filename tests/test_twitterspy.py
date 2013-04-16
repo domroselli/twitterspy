@@ -1,36 +1,27 @@
-from twitterspy import oauth_factory
-from twitterspy import timeline_json_factory, timeline_pyobj_factory
-from twitterspy import hashtags_factory, media_factory, tweet_factory
-from twitterspy import urls_factory, get_all_user_ids
-from twitterspy import CONSUMER_KEY, CONSUMER_SECRET
-from twitterspy import API_VERSION, API_DOMAIN
+from twitterspy import *
 from twitter.api import Twitter
 
 import json
 import pytest
 
 def test_oauth_factory(oauthfile, token, token_secret):
-    OAuth = oauth_factory(oauthfile, token, token_secret)
-    assert OAuth
+    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    assert twitter_oauth
 
-def test_twitter_factory(oauthfile, token, token_secret):
-    twitter_oauth = oauth_factory(oauthfile, token, token_secret)
+def test_twitter_factory(oauthfile):
+    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     twitter_api = None
     if twitter_oauth:
-        twitter_api = Twitter(auth=twitter_oauth,
-                                secure=True,
-                                api_version=API_VERSION,
-                                domain=API_DOMAIN)
+        twitter_api = twitter_factory(twitter_oauth,
+                                        API_VERSION, API_DOMAIN, True)
     assert twitter_api
 
 # expect this to fail with 401 error from twitter b/c of the current token
-@pytest.mark.xfail
-def test_timeline_json_factory(oauthfile, token, token_secret):
-    twitter_oauth = oauth_factory(oauthfile, token, token_secret)
-    twitter_api = Twitter(auth=twitter_oauth,
-                            secure=True,
-                            api_version=API_VERSION,
-                            domain=API_DOMAIN)
+@pytest.mark.skipif("True")
+def test_timeline_json_factory(oauthfile):
+    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    twitter_api = twitter_factory(twitter_oauth,
+                                        API_VERSION, API_DOMAIN, True)
     screen_name = 'FAKEGRIMLOCK'
     tweet_count = 1
     since_id = None
@@ -95,3 +86,21 @@ def test_get_all_user_ids(timelinefile):
     user_mentions = timeline_pyobjs['user_mentions']
     user_ids = get_all_user_ids(tweets, user_mentions)
     assert len(user_ids) > 0
+
+@pytest.mark.skipif("True")
+def test_user_json_factory():
+    twitter_ouath = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    twitter_api = twitter_factory(twitter_oauth,
+                                        API_VERSION, API_DOMAIN, True)
+
+    users = user_json_factory(twitter_api, user_ids)
+    assert len(users) > 0
+
+def test_user_pyobjs_factory(userfile):
+    with open(userfile, 'r') as f:
+        user_json = json.loads(''.join([line for line in f]))
+
+    user_pyobjs = user_pyobjs_factory(user_json)
+    assert user_pyobjs
+
+
