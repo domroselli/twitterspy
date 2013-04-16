@@ -1,7 +1,7 @@
 from twitterspy import oauth_factory
 from twitterspy import timeline_json_factory, timeline_pyobj_factory
 from twitterspy import hashtags_factory, media_factory, tweet_factory
-from twitterspy import urls_factory
+from twitterspy import urls_factory, get_all_user_ids
 from twitterspy import CONSUMER_KEY, CONSUMER_SECRET
 from twitterspy import API_VERSION, API_DOMAIN
 from twitter.api import Twitter
@@ -85,3 +85,13 @@ def test_timeline_pyobj_factory(timelinefile):
     assert timeline_pyobjs['hashtags'] and len(timeline_pyobjs['hashtags']) > 0
     assert timeline_pyobjs['media'] and len(timeline_pyobjs['media']) > 0
     assert timeline_pyobjs['urls'] and len(timeline_pyobjs['urls']) > 0
+
+def test_get_all_user_ids(timelinefile):
+    with open(timelinefile, 'r') as f:
+        timeline_json = json.loads(''.join([line for line in f]))
+
+    timeline_pyobjs = timeline_pyobj_factory(timeline_json)
+    tweets = timeline_pyobjs['tweets']
+    user_mentions = timeline_pyobjs['user_mentions']
+    user_ids = get_all_user_ids(tweets, user_mentions)
+    assert len(user_ids) > 0

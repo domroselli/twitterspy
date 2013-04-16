@@ -141,3 +141,13 @@ def timeline_pyobj_factory(timeline_json):
         pyobjs['user_mentions'] += user_mentions
 
     return pyobjs
+
+def get_all_user_ids(tweets, user_mentions):
+    """Creates a list of all user_ids in tweets and user_mentions"""
+    id_set = set()
+    if tweets: id_set.add(tweets[0].user_id)
+    id_set |= set([m.user_id for m in user_mentions])
+    id_set |= set([t.in_reply_to_user_id
+            for t in tweets if t.in_reply_to_user_id])
+
+    return list(id_set)
