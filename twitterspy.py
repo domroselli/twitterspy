@@ -61,7 +61,14 @@ def timeline_json_factory(twitter_api, screen_name, tweet_count,
     """
     Gets json object from Twitter and returns it to the caller
     """
+    # This needs to be the first statement so all the args/values are captured
     kwargs = locals()
+    if not kwargs['since_id']:
+        del kwargs['since_id']
+
+    if not kwargs['max_id']:
+        del kwargs['max_id']
+
     return twitter_api.statuses.user_timeline(**kwargs)
 
 def tweet_factory(tweet_json):
@@ -75,9 +82,9 @@ def tweet_factory(tweet_json):
                     tweet_json['in_reply_to_user_id'],
                     tweet_json['in_reply_to_user_id_str'],
                     tweet_json['lang'],
+                    tweet_json['retweet_count'],
                     tweet_json['retweeted'],
                     tweet_json['source'],
-                    tweet_json['retweet_count'],
                     tweet_json['text'],
                     tweet_json['truncated'],
                     tweet_json['id'],
@@ -112,7 +119,7 @@ def media_factory(media_json, tweet_id):
                     m['url'])
             for m in media_json]
 
-def timeline_pyobj_factory(timeline_json):
+def timeline_pyobjs_factory(timeline_json):
     """
     Transforms the json into dictionary of lists of Python objects for each
     object discovered

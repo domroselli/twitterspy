@@ -1,3 +1,4 @@
+from tests.helpers import create_user_pyobjs, create_twitter_api
 from twitterspy import *
 from twitter.api import Twitter
 
@@ -16,12 +17,11 @@ def test_twitter_factory(oauthfile):
                                         API_VERSION, API_DOMAIN, True)
     assert twitter_api
 
-# expect this to fail with 401 error from twitter b/c of the current token
+
+# This is left disabled to avoid premature rate limiting
 @pytest.mark.skipif("True")
 def test_timeline_json_factory(oauthfile):
-    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
-    twitter_api = twitter_factory(twitter_oauth,
-                                        API_VERSION, API_DOMAIN, True)
+    twitter_api = create_twitter_api(oauthfile)
     screen_name = 'FAKEGRIMLOCK'
     tweet_count = 1
     since_id = None
@@ -66,11 +66,11 @@ def test_urls_factory(timelinefile):
             for t in timeline_json]
     assert urls and len(urls) > 0
 
-def test_timeline_pyobj_factory(timelinefile):
+def test_timeline_pyobjs_factory(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
-    timeline_pyobjs = timeline_pyobj_factory(timeline_json)
+    timeline_pyobjs = timeline_pyobjs_factory(timeline_json)
     assert timeline_pyobjs
     assert timeline_pyobjs['tweets'] and len(timeline_pyobjs['tweets']) > 0
     assert timeline_pyobjs['hashtags'] and len(timeline_pyobjs['hashtags']) > 0
@@ -81,19 +81,14 @@ def test_get_all_user_ids(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
-    timeline_pyobjs = timeline_pyobj_factory(timeline_json)
+    timeline_pyobjs = timeline_pyobjs_factory(timeline_json)
     tweets = timeline_pyobjs['tweets']
     user_mentions = timeline_pyobjs['user_mentions']
     user_ids = get_all_user_ids(tweets, user_mentions)
     assert len(user_ids) > 0
 
-@pytest.mark.skipif("True")
-def test_user_json_factory():
-    twitter_ouath = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
-    twitter_api = twitter_factory(twitter_oauth,
-                                        API_VERSION, API_DOMAIN, True)
-
-    users = user_json_factory(twitter_api, user_ids)
+def test_user_json_factory(userfile):
+    users = create_user_pyobjs(userfile)
     assert len(users) > 0
 
 def test_user_pyobjs_factory(userfile):

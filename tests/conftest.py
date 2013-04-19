@@ -19,6 +19,17 @@ def pytest_addoption(parser):
     parser.addoption("--userfile", action="store", default="tests/users.json",
                      help="file with user timeline json data")
 
+    parser.addoption("--target_user", action="store", default="DougStanhope",
+                     help="the target user to spy on")
+
+    parser.addoption("--min_tweet_id", action="store",
+                     default="304529268308856832",
+                     help="the minimum tweet_id in the dataset")
+
+    parser.addoption("--max_tweet_id", action="store",
+                     default="316216053355143168",
+                     help="the maximum tweet_id in the dataset")
+
 @pytest.fixture
 def oauthfile(request):
     return request.config.getoption("--oauthfile")
@@ -38,3 +49,15 @@ def timelinefile(request):
 @pytest.fixture
 def userfile(request):
     return request.config.getoption("--userfile")
+
+@pytest.fixture
+def target_user(request):
+    return request.config.getoption("--target_user")
+
+@pytest.fixture
+def min_tweet_id(request):
+    return request.config.getoption("--min_tweet_id")
+
+@pytest.fixture
+def max_tweet_id(request):
+    return request.config.getoption("--max_tweet_id")
