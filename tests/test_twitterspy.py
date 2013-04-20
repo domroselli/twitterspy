@@ -87,9 +87,17 @@ def test_get_all_user_ids(timelinefile):
     user_ids = get_all_user_ids(tweets, user_mentions)
     assert len(user_ids) > 0
 
-def test_user_json_factory(userfile):
-    users = create_user_pyobjs(userfile)
-    assert len(users) > 0
+@pytest.mark.skipif("True")
+def test_user_ids_json_factory(oauthfile, user_ids):
+    twitter_api = create_twitter_api(oauthfile)
+    user_json = user_ids_json_factory(twitter_api, user_ids)
+    assert user_json
+
+@pytest.mark.skipif("True")
+def test_user_screen_names_json_factory(oauthfile, screen_names):
+    twitter_api = create_twitter_api(oauthfile)
+    user_json = user_screen_names_json_factory(twitter_api, screen_names)
+    assert user_json
 
 def test_user_pyobjs_factory(userfile):
     with open(userfile, 'r') as f:

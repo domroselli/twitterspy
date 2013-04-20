@@ -2,6 +2,7 @@ from tests.helpers import init_db, read_json_file
 from tests.helpers import create_user_pyobjs, create_timeline_pyobjs
 from dbinterface import find_unknown_user_ids, insert_object_list
 from dbinterface import read_min_tweet_id, read_max_tweet_id
+from dbinterface import does_user_exist
 #from dbentities import Hashtag, Media, Tweet, Timeline, Url, User, UserMention
 from dbentities import User
 from twitterspy import user_pyobjs_factory, timeline_pyobjs_factory
@@ -38,7 +39,7 @@ def test_read_min_tweet_id(userfile, timelinefile, min_tweet_id):
     insert_object_list(session, timeline_pyobjs['tweets'])
 
     min_id = read_min_tweet_id(session)
-    assert min_id == int(min_tweet_id)
+    assert min_id == min_tweet_id
 
 def test_read_max_tweet_id(userfile, timelinefile, max_tweet_id):
     session = init_db(False)
@@ -49,4 +50,12 @@ def test_read_max_tweet_id(userfile, timelinefile, max_tweet_id):
     insert_object_list(session, timeline_pyobjs['tweets'])
 
     max_id = read_max_tweet_id(session)
-    assert max_id == int(max_tweet_id)
+    assert max_id == max_tweet_id
+
+def test_does_user_exist(userfile):
+    session = init_db(False)
+    user_pyobjs = create_user_pyobjs(userfile)
+    insert_object_list(session, user_pyobjs)
+
+    screen_name = user_pyobjs[0].screen_name
+    assert does_user_exist(session, screen_name)

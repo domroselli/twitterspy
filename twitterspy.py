@@ -156,6 +156,7 @@ def timeline_pyobjs_factory(timeline_json):
 def get_all_user_ids(tweets, user_mentions):
     """Creates a list of all user_ids in tweets and user_mentions"""
     id_set = set()
+    # the user_id of the target
     if tweets: id_set.add(tweets[0].user_id)
     id_set |= set([m.user_id for m in user_mentions])
     id_set |= set([t.in_reply_to_user_id
@@ -163,9 +164,24 @@ def get_all_user_ids(tweets, user_mentions):
 
     return list(id_set)
 
-def user_json_factory(twitter_api, user_ids):
+# TODO: Can we abstract the method call from the loop in these two factories?
+def user_screen_names_json_factory(twitter_api, screen_names):
+    """ Gets the User json objects from Twitter for the given screen_names """
+    user_json = []
+    start = 0
+    length = len(screen_names)
+    end = length if length < USER_LIMIT else USER_LIMIT
+    while start < length:
+        user_json += twitter_api.users.lookup(
+                            screen_name=",".join(
+                                map(str, screen_names[start:end])))
+        start = end
+        end = end + USER_LIMIT
+    return user_json
+
+def user_ids_json_factory(twitter_api, user_ids):
     """Gets the User json objects from Twitter for the given user_ids"""
-    users_json = []
+    user_json = []
     start = 0
     length = len(user_ids)
     end = length if length < USER_LIMIT else USER_LIMIT
@@ -201,3 +217,12 @@ def user_pyobjs_factory(user_json):
                  u['utc_offset'],
                  u['verified'])
             for u in user_json]
+
+#def spy_targets_timeline(screen_name, oauthfile, engine_source ):
+#    oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+#    twitter_api = twitter_factory(oauth)
+#    session = db_session_factory(Base, engine_source, sessionmaker, False)
+#    since_id = read_max_tweet_id(session)
+#    timeline_json_factory(twitter_api, screen_name, TWEET_LIMIT
+#    since_id, max_id, include_rts, exclude_replies):
+#

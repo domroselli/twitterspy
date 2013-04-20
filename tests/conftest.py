@@ -23,12 +23,21 @@ def pytest_addoption(parser):
                      help="the target user to spy on")
 
     parser.addoption("--min_tweet_id", action="store",
-                     default="304529268308856832",
+                     default=304529268308856832,
                      help="the minimum tweet_id in the dataset")
 
     parser.addoption("--max_tweet_id", action="store",
-                     default="316216053355143168",
+                     default=316216053355143168,
                      help="the maximum tweet_id in the dataset")
+
+    parser.addoption("--user_ids", action="store",
+                     default=[14867598,31524680],
+                     help="the user_ids to get from twitter to test the user_json factory")
+
+    parser.addoption("--screen_names", action="store",
+                     default=["DougStanhope","Ralphie_May"],
+                     help="the screen_names to get from twitter to test the user_json factory")
+
 
 @pytest.fixture
 def oauthfile(request):
@@ -61,3 +70,11 @@ def min_tweet_id(request):
 @pytest.fixture
 def max_tweet_id(request):
     return request.config.getoption("--max_tweet_id")
+
+@pytest.fixture
+def screen_names(request):
+    return request.config.getoption("--screen_names")
+
+@pytest.fixture
+def user_ids(request):
+    return request.config.getoption("--user_ids")
