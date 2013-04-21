@@ -1,26 +1,27 @@
-from tests.helpers import create_user_pyobjs, create_twitter_api
+#from tests.helpers import help_create_user_pyobjs_from_file
+#from test.helpers import help_create_twitter_api_from_file
 from twitterspy import *
 from twitter.api import Twitter
 
 import json
 import pytest
 
-def test_oauth_factory(oauthfile, token, token_secret):
-    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+def test_create_oauth(oauthfile, token, token_secret):
+    twitter_oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     assert twitter_oauth
 
-def test_twitter_factory(oauthfile):
-    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+def test_create_twitter(oauthfile):
+    twitter_oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     twitter_api = None
     if twitter_oauth:
-        twitter_api = twitter_factory(twitter_oauth,
+        twitter_api = create_twitter(twitter_oauth,
                                         API_VERSION, API_DOMAIN, True)
     assert twitter_api
 
 
 # This is left disabled to avoid premature rate limiting
 @pytest.mark.skipif("True")
-def test_timeline_json_factory(oauthfile):
+def test_create_timeline_json(oauthfile):
     twitter_api = create_twitter_api(oauthfile)
     screen_name = 'FAKEGRIMLOCK'
     tweet_count = 1
@@ -28,49 +29,49 @@ def test_timeline_json_factory(oauthfile):
     max_id = None
     include_rts = True
     exclude_replies = True
-    timeline = timeline_json_factory(twitter_api, screen_name, tweet_count,
+    timeline = create_timeline_json(twitter_api, screen_name, tweet_count,
                                 since_id, max_id, include_rts, exclude_replies)
     assert len(timeline) > 0
 
-def test_tweet_factory(timelinefile):
+def test_create_tweet(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
-    tweets = [tweet_factory(t) for t in timeline_json]
+    tweets = [create_tweet(t) for t in timeline_json]
     assert tweets and len(tweets) > 0
 
-def test_hashtags_factory(timelinefile):
+def test_create_hashtags(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
     tweet_id = -1
-    hashtags = [hashtags_factory(t['entities']['hashtags'], tweet_id)
+    hashtags = [create_hashtags(t['entities']['hashtags'], tweet_id)
             for t in timeline_json]
     assert hashtags and len(hashtags) > 0
 
-def test_media_factory(timelinefile):
+def test_create_media(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
     tweet_id = -1
-    media = [media_factory(t['entities']['media'], tweet_id)
+    media = [create_media(t['entities']['media'], tweet_id)
             for t in timeline_json if 'media' in t['entities']]
     assert media and len(media) > 0
 
-def test_urls_factory(timelinefile):
+def test_create_urls(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
     tweet_id = -1
-    urls = [urls_factory(t['entities']['urls'], tweet_id)
+    urls = [create_urls(t['entities']['urls'], tweet_id)
             for t in timeline_json]
     assert urls and len(urls) > 0
 
-def test_timeline_pyobjs_factory(timelinefile):
+def test_create_timeline_pyobjs(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
-    timeline_pyobjs = timeline_pyobjs_factory(timeline_json)
+    timeline_pyobjs = create_timeline_pyobjs(timeline_json)
     assert timeline_pyobjs
     assert timeline_pyobjs['tweets'] and len(timeline_pyobjs['tweets']) > 0
     assert timeline_pyobjs['hashtags'] and len(timeline_pyobjs['hashtags']) > 0
@@ -81,29 +82,29 @@ def test_get_all_user_ids(timelinefile):
     with open(timelinefile, 'r') as f:
         timeline_json = json.loads(''.join([line for line in f]))
 
-    timeline_pyobjs = timeline_pyobjs_factory(timeline_json)
+    timeline_pyobjs = create_timeline_pyobjs(timeline_json)
     tweets = timeline_pyobjs['tweets']
     user_mentions = timeline_pyobjs['user_mentions']
     user_ids = get_all_user_ids(tweets, user_mentions)
     assert len(user_ids) > 0
 
 @pytest.mark.skipif("True")
-def test_user_ids_json_factory(oauthfile, user_ids):
+def test_create_user_json_from_user_ids(oauthfile, user_ids):
     twitter_api = create_twitter_api(oauthfile)
-    user_json = user_ids_json_factory(twitter_api, user_ids)
+    user_json = create_user_json_from_user_ids(twitter_api, user_ids)
     assert user_json
 
 @pytest.mark.skipif("True")
-def test_user_screen_names_json_factory(oauthfile, screen_names):
+def test_create_user_json_from_screen_names(oauthfile, screen_names):
     twitter_api = create_twitter_api(oauthfile)
-    user_json = user_screen_names_json_factory(twitter_api, screen_names)
+    user_json = create_user_json_from_screen_names(twitter_api, screen_names)
     assert user_json
 
-def test_user_pyobjs_factory(userfile):
+def test_create_user_pyobjs(userfile):
     with open(userfile, 'r') as f:
         user_json = json.loads(''.join([line for line in f]))
 
-    user_pyobjs = user_pyobjs_factory(user_json)
+    user_pyobjs = create_user_pyobjs(user_json)
     assert user_pyobjs
 
 

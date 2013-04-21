@@ -5,7 +5,7 @@ from email.utils import parsedate_tz
 from datetime import datetime, timedelta
 from dbentities import User, Tweet
 
-def db_session_factory(Base, engine_source, sessionmaker, echo_on):
+def create_db_session(Base, engine_source, sessionmaker, echo_on):
     engine = create_engine(engine_source, echo=echo_on)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
@@ -46,3 +46,13 @@ def does_user_exist(session, screen_name):
         return screen_name == result[0]
     else:
         return False
+
+def is_user_protected(session, screen_name):
+    result = session.query(User.protected).filter(
+                User.screen_name == screen_name).one()
+
+    if not result:
+        emsg = "screen_name {} does not exist in database".format(screen_name)
+        raise RuntimeError(emsg)
+
+    return result[0]

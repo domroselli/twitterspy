@@ -16,6 +16,11 @@ API_DOMAIN = "api.twitter.com"
 USER_LIMIT = 100
 TWEET_LIMIT = 200
 
+# These are per hour in the 1.1 API
+USER_TIMELINE_RATE_LIMIT = 180
+USER_LOOKUP_RATE_LIMIT = 180
+
+
 def do_oauth_dance(oauth_filename, key, secret):
     """
     Prompts user to create OAuth token and token secret
@@ -33,7 +38,7 @@ def do_oauth_dance(oauth_filename, key, secret):
         token = token_secret = ''
     return token, token_secret
 
-def oauth_factory(oauthfile, consumer_key, consumer_secret):
+def create_oauth(oauthfile, consumer_key, consumer_secret):
     """
     Creates and OAuth object using the tokens from the oauthfile and
     the consumer_key and consumer_secret. If the file doesn't exists
@@ -48,7 +53,7 @@ def oauth_factory(oauthfile, consumer_key, consumer_secret):
 
     return OAuth(token, token_secret, consumer_key, consumer_secret)
 
-def twitter_factory(twitter_oauth, api_version=API_VERSION,
+def create_twitter(twitter_oauth, api_version=API_VERSION,
                         api_domain=API_DOMAIN, secure=True):
     """
     Creates and returns a Twitter API object
@@ -56,7 +61,7 @@ def twitter_factory(twitter_oauth, api_version=API_VERSION,
     return Twitter(auth=twitter_oauth, secure=secure, api_version=api_version,
                     domain=api_domain)
 
-def timeline_json_factory(twitter_api, screen_name, tweet_count,
+def create_timeline_json(twitter_api, screen_name, tweet_count,
         since_id, max_id, include_rts, exclude_replies):
     """
     Gets json object from Twitter and returns it to the caller
@@ -71,7 +76,7 @@ def timeline_json_factory(twitter_api, screen_name, tweet_count,
 
     return twitter_api.statuses.user_timeline(**kwargs)
 
-def tweet_factory(tweet_json):
+def create_tweet(tweet_json):
     """ Creates a Tweet object """
     tweet = Tweet(tweet_json['created_at'],
                     tweet_json['favorited'],
@@ -92,20 +97,20 @@ def tweet_factory(tweet_json):
                     tweet_json['user']['id'])
     return tweet
 
-def hashtags_factory(hashtag_json, tweet_id):
+def create_hashtags(hashtag_json, tweet_id):
     """Creates a list of Hashtag objects"""
     return [Hashtag(h['text'], tweet_id) for h in hashtag_json]
 
-def urls_factory(url_json, tweet_id):
+def create_urls(url_json, tweet_id):
     """Creates a list of Url objects"""
     return [Url(u['display_url'], u['expanded_url'], tweet_id, u['url'])
             for u in url_json]
 
-def user_mentions_factory(user_mentions_json, tweet_id):
+def create_user_mentions(user_mentions_json, tweet_id):
     """Creates a list of Url objects"""
     return [UserMention(tweet_id, m['id']) for m in user_mentions_json]
 
-def media_factory(media_json, tweet_id):
+def create_media(media_json, tweet_id):
     """Creates a list of Media objects"""
     return [Media(m['display_url'],
                     m['expanded_url'],
@@ -119,7 +124,7 @@ def media_factory(media_json, tweet_id):
                     m['url'])
             for m in media_json]
 
-def timeline_pyobjs_factory(timeline_json):
+def create_timeline_pyobjs(timeline_json):
     """
     Transforms the json into dictionary of lists of Python objects for each
     object discovered
@@ -131,17 +136,17 @@ def timeline_pyobjs_factory(timeline_json):
               'user_mentions': []}
 
     for t in timeline_json:
-        tweet = tweet_factory(t)
+        tweet = create_tweet(t)
         tweet_id = tweet.tweet_id
         user_id = tweet.user_id
         ent = t['entities']
-        hashtags = hashtags_factory(ent['hashtags'], tweet_id)
-        urls = urls_factory(ent['urls'], tweet_id)
-        user_mentions = user_mentions_factory(ent['user_mentions'], tweet_id)
+        hashtags = create_hashtags(ent['hashtags'], tweet_id)
+        urls = create_urls(ent['urls'], tweet_id)
+        user_mentions = create_user_mentions(ent['user_mentions'], tweet_id)
 
         # media isn't guarunteed to be present
         try:
-            media = media_factory(ent['media'], tweet_id)
+            media = create_media(ent['media'], tweet_id)
         except KeyError:
             media = []
 
@@ -165,7 +170,7 @@ def get_all_user_ids(tweets, user_mentions):
     return list(id_set)
 
 # TODO: Can we abstract the method call from the loop in these two factories?
-def user_screen_names_json_factory(twitter_api, screen_names):
+def create_user_json_from_screen_names(twitter_api, screen_names):
     """ Gets the User json objects from Twitter for the given screen_names """
     user_json = []
     start = 0
@@ -179,7 +184,7 @@ def user_screen_names_json_factory(twitter_api, screen_names):
         end = end + USER_LIMIT
     return user_json
 
-def user_ids_json_factory(twitter_api, user_ids):
+def create_user_json_from_user_ids(twitter_api, user_ids):
     """Gets the User json objects from Twitter for the given user_ids"""
     user_json = []
     start = 0
@@ -192,7 +197,7 @@ def user_ids_json_factory(twitter_api, user_ids):
         end = end + USER_LIMIT
     return user_json
 
-def user_pyobjs_factory(user_json):
+def create_user_pyobjs(user_json):
     """Creates a list of User python objects for the given json objects"""
     return [User(u['created_at'],
                  u['default_profile'],
@@ -218,11 +223,23 @@ def user_pyobjs_factory(user_json):
                  u['verified'])
             for u in user_json]
 
-#def spy_targets_timeline(screen_name, oauthfile, engine_source ):
-#    oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
-#    twitter_api = twitter_factory(oauth)
-#    session = db_session_factory(Base, engine_source, sessionmaker, False)
+#def spy_targets_timeline(screen_name, oauthfile, engine_source,
+#                                        user_limit, timeline_limit):
+#    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+#    twitter_api = create_twitter(oauth)
+#    session = create_db_session(Base, engine_source, sessionmaker, False)
+#
+#    if not does_user_exist(session, screen_name):
+#        target_user = create_user_json_from_screen_names(twitter_api, [screen_name])
+#        user_limit -= 1
+#        insert_object_list(session, target_user)
+#
+#    try:
+#        is_user_protected(session, screen_name)
+#    except RuntimeError:
+#        print("{} is protected and cannot be spied on".format(screen_name))
+#        return
+#
 #    since_id = read_max_tweet_id(session)
-#    timeline_json_factory(twitter_api, screen_name, TWEET_LIMIT
-#    since_id, max_id, include_rts, exclude_replies):
+#    create_timeline_json(twitter_api, screen_name)
 #
