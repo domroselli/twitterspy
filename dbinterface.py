@@ -5,8 +5,8 @@ from email.utils import parsedate_tz
 from datetime import datetime, timedelta
 from dbentities import User, Tweet
 
-def create_db_session(Base, engine_source, sessionmaker, echo_on):
-    engine = create_engine(engine_source, echo=echo_on)
+def create_db_session(Base, db_url, sessionmaker, echo_on):
+    engine = create_engine(db_url, echo=echo_on)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
 

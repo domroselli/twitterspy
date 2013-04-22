@@ -1,11 +1,17 @@
 from dbentities import Hashtag, Media, Url, UserMention
 from dbentities import Base, Tweet, Timeline, User
 
+from dbinterface import read_min_tweet_id, read_max_tweet_id
+from dbinterface import create_db_session, insert_object_list
 from twitter.oauth import OAuth, write_token_file, read_token_file
 from twitter.oauth_dance import oauth_dance
 from twitter.api import Twitter, TwitterError, TwitterHTTPError
 from sqlalchemy.orm import sessionmaker
+
 import json
+import argparse
+import sys
+import os
 
 CONSUMER_KEY = 'uS6hO2sV6tDKIOeVjhnFnQ'
 CONSUMER_SECRET = 'MEYTOS97VvlHX7K1rwHPEqVpTSqZ71HtvoK4sVuYk'
@@ -16,10 +22,8 @@ API_DOMAIN = "api.twitter.com"
 USER_LIMIT = 100
 TWEET_LIMIT = 200
 
-# These are per hour in the 1.1 API
-USER_TIMELINE_RATE_LIMIT = 180
-USER_LOOKUP_RATE_LIMIT = 180
-
+DEFAULT_OAUTHFILE = '{}{}.twitter_oauth'.format(os.environ['HOME'], os.sep)
+DEFAULT_DB_URL = 'sqlite:///twitterspy.sqlite'
 
 def do_oauth_dance(oauth_filename, key, secret):
     """ Prompts user to create OAuth token and token secret and then saves them
@@ -214,38 +218,77 @@ def create_user_pyobjs(user_json):
                  u['id'],
                  u['id_str'],
                  u['utc_offset'],
-                 u['verified']) for u in user_json]
+                 u['verified'])
+            for u in user_json]
 
-class TimelineSpy:
-    def __init__(self, twitter_api, session, screen_name, user_limit,
-            timeline_limit):
-        self.api = twitter_api
-        self.session = session
-        self.target = screen_name
+def spy_targets_timeline(screen_name, oauthfile, db_url):
+    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    twitter_api = create_twitter(oauth)
+    session = create_db_session(Base, db_url, sessionmaker, False)
 
-    def get_target_user_pyobj(self):
-        pass
+    since_id = read_max_tweet_id(session)
+    max_id = read_min_tweet_id(session)
+    if max_id: max_id -= 1
+    # max_id-1 because max_id is inclusive
+    timeline_json = create_timeline_json(twitter_api, screen_name, TWEET_LIMIT,
+            since_id, max_id, True, False)
+    timeline = create_timeline_pyobjs(timeline_json)
 
-    def get_timeline(self):
-        pass
+    tweets = timeline['tweets']
+    user_mentions = timeline['user_mentions']
+    user_ids = get_all_user_ids(tweets, user_mentions)
 
-#def spy_targets_timeline(screen_name, oauthfile, engine_source, user_limit,
-#        timeline_limit):
-#    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
-#    twitter_api = create_twitter(oauth)
-#    session = create_db_session(Base, engine_source, sessionmaker, False)
-#
-#    if not does_user_exist(session, screen_name):
-#        target_user = create_user_json_from_screen_names(twitter_api, [screen_name])
-#        user_limit -= 1
-#        insert_object_list(session, target_user)
-#
-#    try:
-#        is_user_protected(session, screen_name)
-#    except RuntimeError:
-#        print("{} is protected and cannot be spied on".format(screen_name))
-#        return
-#
-#    since_id = read_max_tweet_id(session)
-#    create_timeline_json(twitter_api, screen_name)
-#
+    user_json = create_user_json_from_user_ids(twitter_api, user_ids)
+    users = create_user_pyobjs(user_json)
+
+    insert_object_list(session, users)
+    insert_object_list(session, tweets)
+    insert_object_list(session, user_mentions)
+    insert_object_list(session, timeline['hashtags'])
+    insert_object_list(session, timeline['media'])
+    insert_object_list(session, timeline['urls'])
+
+
+def process_command_line(argv):
+    """
+    Returns a Namespace object with the argument names as attributes.
+    `argv`` is a list of arguments, or `None` for ``sys.argv[1:]``.
+    """
+
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # initialize the parse object
+    desc = 'Get Twitter statuses and insert into the database.'
+    parser = argparse.ArgumentParser(description=desc)
+
+    oa_help = 'The filename that has the oauth_token and oauth_token_secret'
+    parser.add_argument('-o', action='store',
+                        dest='oauthfile',
+                        default=DEFAULT_OAUTHFILE,
+                        help=oa_help)
+
+    d_help = 'The SQLAlchemy database url to store retrieved data'
+    parser.add_argument('-du', action='store',
+                        dest='db_url',
+                        default=DEFAULT_DB_URL,
+                        help=d_help)
+
+    t_help = 'The screen_name of the account to monitor'
+    parser.add_argument('-t', action='store',
+                        dest='target_name',
+                        help=t_help)
+
+    return parser.parse_args()
+
+
+def _main():
+    args = process_command_line(sys.argv)
+    oauthfile = args.oauthfile
+    db_url = args.db_url
+    target_name = args.target_name
+    spy_targets_timeline(target_name, oauthfile, db_url)
+
+if __name__ == '__main__':
+    status = _main()
+    sys.exit(status)
