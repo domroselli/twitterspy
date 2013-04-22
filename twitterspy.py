@@ -22,9 +22,8 @@ USER_LOOKUP_RATE_LIMIT = 180
 
 
 def do_oauth_dance(oauth_filename, key, secret):
-    """
-    Prompts user to create OAuth token and token secret
-    and then saves them in filename
+    """ Prompts user to create OAuth token and token secret and then saves them
+    in filename
     """
     print(('OAuth file {} not found'.format(oauth_filename)))
     request = 'Do you want to initiate a new oauth dance (y or n)? '
@@ -39,11 +38,10 @@ def do_oauth_dance(oauth_filename, key, secret):
     return token, token_secret
 
 def create_oauth(oauthfile, consumer_key, consumer_secret):
-    """
-    Creates and OAuth object using the tokens from the oauthfile and
-    the consumer_key and consumer_secret. If the file doesn't exists
-    we prompt the user to initiate the oauth dance, and save the
-    token and token secret in the oauthfile
+    """Creates and OAuth object using the tokens from the oauthfile and the
+    consumer_key and consumer_secret. If the file doesn't exists we prompt the
+    user to initiate the oauth dance, and save the token and token secret in
+    the oauthfile
     """
     try:
         token, token_secret = read_token_file(oauthfile)
@@ -55,17 +53,13 @@ def create_oauth(oauthfile, consumer_key, consumer_secret):
 
 def create_twitter(twitter_oauth, api_version=API_VERSION,
                         api_domain=API_DOMAIN, secure=True):
-    """
-    Creates and returns a Twitter API object
-    """
+    """Creates and returns a Twitter API object"""
     return Twitter(auth=twitter_oauth, secure=secure, api_version=api_version,
                     domain=api_domain)
 
 def create_timeline_json(twitter_api, screen_name, tweet_count,
         since_id, max_id, include_rts, exclude_replies):
-    """
-    Gets json object from Twitter and returns it to the caller
-    """
+    """Gets json object from Twitter and returns it to the caller"""
     # This needs to be the first statement so all the args/values are captured
     kwargs = locals()
     if not kwargs['since_id']:
@@ -77,7 +71,7 @@ def create_timeline_json(twitter_api, screen_name, tweet_count,
     return twitter_api.statuses.user_timeline(**kwargs)
 
 def create_tweet(tweet_json):
-    """ Creates a Tweet object """
+    """Creates a Tweet object"""
     tweet = Tweet(tweet_json['created_at'],
                     tweet_json['favorited'],
                     tweet_json['favorite_count'],
@@ -171,7 +165,7 @@ def get_all_user_ids(tweets, user_mentions):
 
 # TODO: Can we abstract the method call from the loop in these two factories?
 def create_user_json_from_screen_names(twitter_api, screen_names):
-    """ Gets the User json objects from Twitter for the given screen_names """
+    """Gets the User json objects from Twitter for the given screen_names"""
     user_json = []
     start = 0
     length = len(screen_names)
@@ -220,11 +214,23 @@ def create_user_pyobjs(user_json):
                  u['id'],
                  u['id_str'],
                  u['utc_offset'],
-                 u['verified'])
-            for u in user_json]
+                 u['verified']) for u in user_json]
 
-#def spy_targets_timeline(screen_name, oauthfile, engine_source,
-#                                        user_limit, timeline_limit):
+class TimelineSpy:
+    def __init__(self, twitter_api, session, screen_name, user_limit,
+            timeline_limit):
+        self.api = twitter_api
+        self.session = session
+        self.target = screen_name
+
+    def get_target_user_pyobj(self):
+        pass
+
+    def get_timeline(self):
+        pass
+
+#def spy_targets_timeline(screen_name, oauthfile, engine_source, user_limit,
+#        timeline_limit):
 #    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
 #    twitter_api = create_twitter(oauth)
 #    session = create_db_session(Base, engine_source, sessionmaker, False)
