@@ -38,6 +38,14 @@ def read_max_tweet_id(session):
     result = session.query(func.max(Tweet.tweet_id)).one()
     return result[0]
 
+def read_min_tweet_id_greater_than_tweet_id(session, tweet_id):
+    """Returns the minimum tweet_if value from the Tweets table that is less
+    than the passed in tweet_id
+    """
+    result = session.query(func.min(Tweet.tweet_id)).filter(
+            Tweet.tweet_id < tweet_id).one()
+    return result[0]
+
 def does_user_exist(session, screen_name):
     result = session.query(User.screen_name).filter(
                 User.screen_name == screen_name).one()

@@ -279,7 +279,6 @@ class UserMention(Base):
     __tablename__ = 'usermentions'
 
     tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'), primary_key=True)
-    usermention_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.user_id'), primary_key=True)
 
     tweet = relationship("Tweet", backref=backref('user_mentions'))

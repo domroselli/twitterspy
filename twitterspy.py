@@ -3,10 +3,15 @@ from dbentities import Base, Tweet, Timeline, User
 
 from dbinterface import read_min_tweet_id, read_max_tweet_id
 from dbinterface import create_db_session, insert_object_list
+from dbinterface import read_min_tweet_id_greater_than_tweet_id
+from dbinterface import find_unknown_user_ids
+
 from twitter.oauth import OAuth, write_token_file, read_token_file
 from twitter.oauth_dance import oauth_dance
 from twitter.api import Twitter, TwitterError, TwitterHTTPError
 from sqlalchemy.orm import sessionmaker
+
+from pprint import pprint
 
 import json
 import argparse
@@ -23,7 +28,9 @@ USER_LIMIT = 100
 TWEET_LIMIT = 200
 
 DEFAULT_OAUTHFILE = '{}{}.twitter_oauth'.format(os.environ['HOME'], os.sep)
-DEFAULT_DB_URL = 'sqlite:///twitterspy.sqlite'
+DEFAULT_DB_URL = 'sqlite:///twitterspy-{}.sqlite'
+
+DB_ECHO_ON = False
 
 def do_oauth_dance(oauth_filename, key, secret):
     """ Prompts user to create OAuth token and token secret and then saves them
@@ -62,15 +69,15 @@ def create_twitter(twitter_oauth, api_version=API_VERSION,
                     domain=api_domain)
 
 def create_timeline_json(twitter_api, screen_name, tweet_count,
-        since_id, max_id, include_rts, exclude_replies):
+        max_id, since_id, include_rts, exclude_replies):
     """Gets json object from Twitter and returns it to the caller"""
     # This needs to be the first statement so all the args/values are captured
     kwargs = locals()
-    if not kwargs['since_id']:
-        del kwargs['since_id']
-
     if not kwargs['max_id']:
         del kwargs['max_id']
+
+    if not kwargs['since_id']:
+        del kwargs['since_id']
 
     return twitter_api.statuses.user_timeline(**kwargs)
 
@@ -221,33 +228,41 @@ def create_user_pyobjs(user_json):
                  u['verified'])
             for u in user_json]
 
-def spy_targets_timeline(screen_name, oauthfile, db_url):
-    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
-    twitter_api = create_twitter(oauth)
-    session = create_db_session(Base, db_url, sessionmaker, False)
-
-    since_id = read_max_tweet_id(session)
-    max_id = read_min_tweet_id(session)
-    if max_id: max_id -= 1
-    # max_id-1 because max_id is inclusive
+def spy_targets_timeline(screen_name, twitter_api, session, tweet_count, max_id,
+        since_id, include_rts, exclude_replies):
+    """Gets all the Timeline objects from a users timeline and saves them to
+    the database
+    """
     timeline_json = create_timeline_json(twitter_api, screen_name, TWEET_LIMIT,
-            since_id, max_id, True, False)
-    timeline = create_timeline_pyobjs(timeline_json)
+            max_id, since_id, include_rts, exclude_replies)
 
-    tweets = timeline['tweets']
-    user_mentions = timeline['user_mentions']
-    user_ids = get_all_user_ids(tweets, user_mentions)
+    timeline_len = len(timeline_json)
+    if timeline_len:
+        timeline = create_timeline_pyobjs(timeline_json)
 
-    user_json = create_user_json_from_user_ids(twitter_api, user_ids)
-    users = create_user_pyobjs(user_json)
+        hashtags = timeline['hashtags']
+        media = timeline['media']
+        tweets = timeline['tweets']
+        urls = timeline['urls']
+        user_mentions = timeline['user_mentions']
 
-    insert_object_list(session, users)
-    insert_object_list(session, tweets)
-    insert_object_list(session, user_mentions)
-    insert_object_list(session, timeline['hashtags'])
-    insert_object_list(session, timeline['media'])
-    insert_object_list(session, timeline['urls'])
+        user_ids = get_all_user_ids(tweets, user_mentions)
+        unknown_user_ids = find_unknown_user_ids(session, user_ids)
+        user_json = create_user_json_from_user_ids(twitter_api, unknown_user_ids)
+        users = create_user_pyobjs(user_json)
 
+        if sys.flags.debug:
+            print("Saving {}'s timeline to database".format(screen_name))
+
+        # Order is important due to database dependencies
+        if users: insert_object_list(session, users)
+        if tweets: insert_object_list(session, tweets)
+        if user_mentions: insert_object_list(session, user_mentions)
+        if hashtags: insert_object_list(session, hashtags)
+        if media: insert_object_list(session, media)
+        if urls: insert_object_list(session, urls)
+
+    return timeline_len
 
 def process_command_line(argv):
     """
@@ -262,6 +277,11 @@ def process_command_line(argv):
     desc = 'Get Twitter statuses and insert into the database.'
     parser = argparse.ArgumentParser(description=desc)
 
+    t_help = 'The screen_name of the account to monitor'
+    parser.add_argument('-s', action='store',
+                        dest='screen_name',
+                        help=t_help)
+
     oa_help = 'The filename that has the oauth_token and oauth_token_secret'
     parser.add_argument('-o', action='store',
                         dest='oauthfile',
@@ -274,20 +294,49 @@ def process_command_line(argv):
                         default=DEFAULT_DB_URL,
                         help=d_help)
 
-    t_help = 'The screen_name of the account to monitor'
-    parser.add_argument('-t', action='store',
-                        dest='target_name',
-                        help=t_help)
-
     return parser.parse_args()
-
 
 def _main():
     args = process_command_line(sys.argv)
+    screen_name = args.screen_name
     oauthfile = args.oauthfile
-    db_url = args.db_url
-    target_name = args.target_name
-    spy_targets_timeline(target_name, oauthfile, db_url)
+    db_url = args.db_url.format(screen_name)
+
+    print("Authenticating to Twitter...")
+    oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    twitter_api = create_twitter(oauth)
+    print("Authenticated!\n")
+
+    print("Creating session to database: {}".format(db_url))
+    session = create_db_session(Base, db_url, sessionmaker, DB_ECHO_ON)
+    print("Session established!\n")
+
+    since_id = read_max_tweet_id(session)
+    max_id = None
+    timeline_len = 1
+
+    print("Getting {}'s timeline...".format(screen_name))
+    # For the very first timeline request, we only want to use max_id after the
+    # initial request
+    if not since_id:
+        while timeline_len:
+            timeline_len = spy_targets_timeline(screen_name, twitter_api,
+                    session, TWEET_LIMIT, max_id, None, True, False)
+            max_id = (read_min_tweet_id(session) - 1)
+
+    # For subsequent timeline requests, we use both max_id and since_id to
+    # get only those tweets that have occurred since the last time we processed
+    # the timeline
+    else:
+        while timeline_len:
+            timeline_len = spy_targets_timeline(screen_name, twitter_api,
+                    session, TWEET_LIMIT, max_id, since_id, True, False)
+
+            max_id = read_min_tweet_id_greater_than_tweet_id(session, since_id)
+            max_id -= 1
+
+    print("Timeline saved!\n")
+
 
 if __name__ == '__main__':
     status = _main()
