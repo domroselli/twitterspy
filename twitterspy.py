@@ -302,6 +302,9 @@ def _main():
     oauthfile = args.oauthfile
     db_url = args.db_url.format(screen_name)
 
+    if screen_name.startswith('@'):
+        screen_name = screen_name[1:]
+
     print("Authenticating to Twitter...")
     oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     twitter_api = create_twitter(oauth)
