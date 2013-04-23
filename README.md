@@ -16,7 +16,7 @@ __Please Note:__ this software is currently under development and some or all fe
 
 ### Basic Usage
 ***
-`python twitterspy -s *screen_name*`
+`python twitterspy -s screen_name`
 
 This will run twitterspy against the *screen_name* and store that users Twitter data in a sqlite database named after  
 the user in the current working directory 
