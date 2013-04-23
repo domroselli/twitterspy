@@ -16,15 +16,15 @@ __Please Note:__ this software is currently under development and some or all fe
 
 ### Basic Usage
 ***
-`python twitterspy -t *target_screen_name*`
+`python twitterspy -t *screen_name*`
 
-This will run twitterspy against the *target_screen_name* and store that users Twitter data in a sqlite database named after  
+This will run twitterspy against the *screen_name* and store that users Twitter data in a sqlite database named after  
 the user in the current working directory 
 
 
 ### Complete Parameter List
 ***
-+ __-t *target_screen_name*__  
++ __-s *screen_name*__  
 an unprotected screen_name to spy on.
 
 + __-du *'dabase_url'*__  
