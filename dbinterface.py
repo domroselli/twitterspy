@@ -12,6 +12,7 @@ def create_db_session(Base, db_url, sessionmaker, echo_on):
 
     return Session()
 
+
 def find_unknown_user_ids(session, user_ids):
     result = session.query(User.user_id).filter(
                 User.user_id.in_(user_ids)).all()
@@ -21,6 +22,7 @@ def find_unknown_user_ids(session, user_ids):
 
     return list(unknown_users)
 
+
 def insert_object_list(session, object_list):
     """
     Inserts a list of database objects to the database using the Session object
@@ -28,23 +30,29 @@ def insert_object_list(session, object_list):
     session.add_all(object_list)
     session.commit()
 
+
 def read_min_tweet_id(session):
     """Returns the minimum tweet_if value from the Tweets table"""
     result = session.query(func.min(Tweet.tweet_id)).one()
     return result[0]
+
 
 def read_max_tweet_id(session):
     """Returns the maximum tweet_if value from the Tweets table"""
     result = session.query(func.max(Tweet.tweet_id)).one()
     return result[0]
 
+
 def read_min_tweet_id_greater_than_tweet_id(session, tweet_id):
     """Returns the minimum tweet_if value from the Tweets table that is less
     than the passed in tweet_id
     """
+    if tweet_id is None:
+        tweet_id = 0
     result = session.query(func.min(Tweet.tweet_id)).filter(
-            Tweet.tweet_id < tweet_id).one()
+            Tweet.tweet_id > tweet_id).one()
     return result[0]
+
 
 def does_user_exist(session, screen_name):
     result = session.query(User.screen_name).filter(
@@ -54,6 +62,7 @@ def does_user_exist(session, screen_name):
         return screen_name == result[0]
     else:
         return False
+
 
 def is_user_protected(session, screen_name):
     result = session.query(User.protected).filter(

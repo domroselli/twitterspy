@@ -38,6 +38,8 @@ def pytest_addoption(parser):
                      default=["DougStanhope","Ralphie_May"],
                      help="the screen_names to get from twitter to test the user_json factory")
 
+    parser.addoption("--useridfile", action="store", default="tests/userids.json",
+                     help="file with outh credentials")
 
 @pytest.fixture
 def oauthfile(request):
@@ -78,3 +80,11 @@ def screen_names(request):
 @pytest.fixture
 def user_ids(request):
     return request.config.getoption("--user_ids")
+
+@pytest.fixture
+def userfile(request):
+    return request.config.getoption("--userfile")
+
+@pytest.fixture
+def useridfile(request):
+    return request.config.getoption("--useridfile")

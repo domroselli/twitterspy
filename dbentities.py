@@ -36,6 +36,28 @@ class Hashtag(Base):
         return u"<HashtagEntity(''{}', '{}')>".format(self.tweet_id, self.text)
 
 
+class Follower(Base):
+    """
+    Follower class/table that represents a users followers
+    """
+    __tablename__ = 'followers'
+
+    observed_at = Column(DateTime, primary_key=True)
+    follower_id = Column(Integer, ForeignKey('tweets.tweet_id'),
+            primary_key=True)
+    user_id = Column(Integer, ForeignKey('tweets.tweet_id'),
+            primary_key=True)
+
+ #   user = relationship("User", backref=backref('users'))
+
+    def __init__(self, user_id, follower_id):
+        self.user_id = user_id
+        self.follower_id = follower_id
+
+    def __repr__(self):
+        return "<Follower('{}','{}')>".format(self.follower_id, self.user_id)
+
+
 class Media(Base):
     """
     Media class/table that represents media in tweets.

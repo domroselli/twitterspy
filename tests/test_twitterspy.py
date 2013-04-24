@@ -1,4 +1,5 @@
-from tests.helpers import read_json_file
+from tests.helpers import read_json_file, help_read_users
+from tests.helpers import help_create_twitter_api_from_file
 from twitterspy import *
 from twitter.api import Twitter
 
@@ -20,18 +21,16 @@ def test_create_twitter(oauthfile):
 
 
 # This is left disabled to avoid premature rate limiting
-@pytest.mark.skipif("True")
+#@pytest.mark.skipif("True")
 def test_create_timeline_json(oauthfile):
-    twitter_api = create_twitter_api(oauthfile)
-    screen_name = 'FAKEGRIMLOCK'
-    tweet_count = 1
-    since_id = None
-    max_id = None
-    include_rts = True
-    exclude_replies = True
-    timeline = create_timeline_json(twitter_api, screen_name, tweet_count,
-            since_id, max_id, include_rts, exclude_replies)
-    assert len(timeline) > 0
+    twitter_api = help_create_twitter_api_from_file(oauthfile)
+    timeline_kwargs = { 'screen_name': 'FAKEGRIMLOCK',
+                        'tweet_count': 1,
+                        'include_rts': True,
+                        'exclude_replies': True
+                      }
+    timeline_json = twitter_api.statuses.user_timeline(**timeline_kwargs)
+    assert len(timeline_json) > 0
 
 
 def test_create_tweet(timelinefile):
@@ -73,6 +72,7 @@ def test_create_timeline_pyobjs(timelinefile):
     assert timeline_pyobjs['media'] and len(timeline_pyobjs['media']) > 0
     assert timeline_pyobjs['urls'] and len(timeline_pyobjs['urls']) > 0
 
+
 def test_get_all_user_ids(timelinefile):
     timeline_json = read_json_file(timelinefile)
     timeline_pyobjs = create_timeline_pyobjs(timeline_json)
@@ -100,3 +100,46 @@ def test_create_user_pyobjs(userfile):
     user_json = read_json_file(userfile)
     user_pyobjs = create_user_pyobjs(user_json)
     assert user_pyobjs
+
+
+@pytest.mark.skipif("True")
+def test_create_follower_pyobjs(screen_name, useridfile):
+    follower_ids = read_json_file(useridfile)
+    follower_pyobj = create_follower_pyobjs(session, screen_name, follower_ids)
+    users = help_read_users(follower_ids)
+    for u in users:
+        assert u.user_id in user_ids
+
+
+@pytest.mark.skipif("True")
+def test_create_follwers(oauthfile, target_user):
+    session = init_db()
+    twitter_api = help_create_twitter_api_from_file(oauthfile)
+    create_followers(twitter_api, session, target_user, 1)
+    follower = session.query(Follower).one()
+    user = session.query(User).one()
+
+    assert follower.user_id == user.user_id
+
+
+@pytest.mark.skipif("True")
+def test_create_follower_ids(oauthfile, target_user):
+    print('authenticating')
+    twitter_api = help_create_twitter_api_from_file(oauthfile)
+    print('authenticated')
+    follower_ids = create_follower_ids(twitter_api, target_user, 1)
+    print(follower_ids)
+    follower_json = twitter_api.followers.ids(screen_name=target_user, count=1)
+    print(follower_json)
+    assert(follower_json['ids'][0] == follower_ids[0])
+
+
+@pytest.mark.skipif("True")
+def test_create_follower_pyobjs(oauthfile, target_user):
+    twitter_api = help_create_twitter_api_from_file(oauthfile)
+    follower_id = create_follower_ids(twitter_api, target_user, 1)
+    #user_json = create_user_json_from_user_ids(twitter_api, follower_id)
+    #user_pyobj = create_user_pyobjs(user_json)
+
+    #assert(follower_id[0] == user_pyobj.user_id)
+    assert follower_id

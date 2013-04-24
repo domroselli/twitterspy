@@ -25,3 +25,8 @@ def help_create_timeline_pyobjs_from_file(filename):
 def help_create_twitter_api_from_file(oauthfile):
     twitter_oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     return create_twitter(twitter_oauth, API_VERSION, API_DOMAIN, True)
+
+def help_read_users(user_ids):
+    session = init_db()
+    users = session.query(User).filter(User.user_id.in_(user_ids)).all()
+    return users
