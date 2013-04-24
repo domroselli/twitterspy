@@ -23,5 +23,5 @@ def help_create_timeline_pyobjs_from_file(filename):
     return create_timeline_pyobjs(read_json_file(filename))
 
 def help_create_twitter_api_from_file(oauthfile):
-    twitter_oauth = oauth_factory(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
+    twitter_oauth = create_oauth(oauthfile, CONSUMER_KEY, CONSUMER_SECRET)
     return create_twitter(twitter_oauth, API_VERSION, API_DOMAIN, True)
