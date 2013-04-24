@@ -22,8 +22,9 @@ class Hashtag(Base):
     """
     __tablename__ = 'hashtag'
 
-    text = Column(String, primary_key=True)
-    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'), primary_key=True)
+    hashtag_id = Column(Integer, primary_key=True)
+    text = Column(String)
+    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'))
 
     tweet = relationship("Tweet", backref=backref('hashtags'))
 
@@ -171,10 +172,11 @@ class Url(Base):
     """
     __tablename__ = 'urls'
 
+    url_id = Column(Integer, primary_key=True)
     display_url = Column(String)
     expanded_url = Column(String)
-    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'), primary_key=True)
-    url = Column(String, primary_key=True)
+    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'))
+    url = Column(String)
 
     tweet = relationship("Tweet", backref=backref('urls'))
 
@@ -278,8 +280,9 @@ class UserMention(Base):
     """
     __tablename__ = 'usermentions'
 
-    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.user_id'), primary_key=True)
+    user_mention_id = Column(Integer, primary_key=True)
+    tweet_id = Column(Integer, ForeignKey('tweets.tweet_id'))
+    user_id = Column(Integer, ForeignKey('users.user_id'))
 
     tweet = relationship("Tweet", backref=backref('user_mentions'))
 
@@ -288,8 +291,6 @@ class UserMention(Base):
         self.user_id = user_id
 
     def __repr__(self):
-        return u"<UserMention('{}', '{}', '{}')>>".format(self.usermention_id,
-                                                       self.tweet_id,
-                                                       self.user_id)
+        return u"<UserMention('{}', '{}')>>".format(self.tweet_id, self.user_id)
 
 

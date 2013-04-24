@@ -297,6 +297,7 @@ def process_command_line(argv):
     return parser.parse_args()
 
 def _main():
+    if sys.flags.debug: DB_ECHO_ON = True
     args = process_command_line(sys.argv)
     screen_name = args.screen_name
     oauthfile = args.oauthfile
