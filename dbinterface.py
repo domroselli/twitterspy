@@ -44,7 +44,8 @@ def read_max_tweet_id(session):
 
 
 def read_min_tweet_id_greater_than_tweet_id(session, tweet_id):
-    """Returns the minimum tweet_if value from the Tweets table that is less
+    """
+    Returns the minimum tweet_if value from the Tweets table that is less
     than the passed in tweet_id
     """
     if tweet_id is None:

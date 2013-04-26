@@ -43,7 +43,7 @@ def test_create_hashtags(timelinefile):
     timeline_json = read_json_file(timelinefile)
     tweet_id = -1
     hashtags = [create_hashtags(t['entities']['hashtags'], tweet_id)
-            for t in timeline_json]
+                for t in timeline_json]
     assert hashtags and len(hashtags) > 0
 
 
@@ -51,7 +51,7 @@ def test_create_media(timelinefile):
     timeline_json = read_json_file(timelinefile)
     tweet_id = -1
     media = [create_media(t['entities']['media'], tweet_id)
-            for t in timeline_json if 'media' in t['entities']]
+             for t in timeline_json if 'media' in t['entities']]
     assert media and len(media) > 0
 
 
@@ -82,6 +82,7 @@ def test_get_all_user_ids(timelinefile):
     assert len(user_ids) > 0
 
 
+# once dev is stable, remove these. Don't want to eat into the rate limit
 @pytest.mark.skipif("True")
 def test_create_user_json_from_user_ids(oauthfile, user_ids):
     twitter_api = create_twitter_api(oauthfile)
@@ -118,7 +119,6 @@ def test_create_follwers(oauthfile, target_user):
     create_followers(twitter_api, session, target_user, 1)
     follower = session.query(Follower).one()
     user = session.query(User).one()
-
     assert follower.user_id == user.user_id
 
 
@@ -137,9 +137,5 @@ def test_create_follower_ids(oauthfile, target_user):
 @pytest.mark.skipif("True")
 def test_create_follower_pyobjs(oauthfile, target_user):
     twitter_api = help_create_twitter_api_from_file(oauthfile)
-    follower_id = create_follower_ids(twitter_api, target_user, 1)
-    #user_json = create_user_json_from_user_ids(twitter_api, follower_id)
-    #user_pyobj = create_user_pyobjs(user_json)
-
-    #assert(follower_id[0] == user_pyobj.user_id)
-    assert follower_id
+    follower_ids = create_follower_ids(twitter_api, target_user, 1)
+    assert follower_id[0]

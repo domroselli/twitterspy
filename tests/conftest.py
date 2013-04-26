@@ -5,6 +5,9 @@ def pytest_addoption(parser):
     parser.addoption("--oauthfile", action="store", default="tests/oauth_creds",
                      help="file with outh credentials")
 
+    # This token and token secret are bogus and only used for testing
+    # reading the oauthfile with the included credentials file. Use a proper
+    # oauthfile for true API calls
     parser.addoption("--token", action="store",
                      default="262332119-7bclllngLikvfVFAqgSe1cRNUE0cnVSYD2YOX7Ju",
                      help="the expected token to be read")

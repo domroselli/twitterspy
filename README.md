@@ -25,7 +25,8 @@ the user in the current working directory
 ### Complete Parameter List
 ***
 + __-s *screen_name*__  
-an unprotected screen_name to spy on.
+an unprotected screen_name to spy on. 
+You can only spy on a protected user if you own the user or are an approved follower.
 
 + __-du *'dabase_url'*__  
    If you want to customize the datastore, you cab confgure the SQLAlchemy Dialect and Pool.  

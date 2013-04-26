@@ -36,7 +36,8 @@ DEFAULT_DB_URL = 'sqlite:///twitterspy-{}.sqlite'
 DB_ECHO_ON = False
 
 def do_oauth_dance(oauth_filename, key, secret):
-    """ Prompts user to create OAuth token and token secret and then saves them
+    """
+    Prompts user to create OAuth token and token secret and then saves them
     in filename
     """
     print(('OAuth file {} not found'.format(oauth_filename)))
@@ -53,7 +54,8 @@ def do_oauth_dance(oauth_filename, key, secret):
 
 
 def create_oauth(oauthfile, consumer_key, consumer_secret):
-    """Creates and OAuth object using the tokens from the oauthfile and the
+    """
+    Creates and OAuth object using the tokens from the oauthfile and the
     consumer_key and consumer_secret. If the file doesn't exists we prompt the
     user to initiate the oauth dance, and save the token and token secret in
     the oauthfile
@@ -274,7 +276,8 @@ def create_user_pyobjs(user_json):
 #
 
 def spy_targets_timeline(twitter_api, session, timeline_kwargs):
-    """Gets all the Timeline objects from a users timeline and saves them to
+    """
+    Gets all the Timeline objects from a users timeline and saves them to
     the database
     """
 
