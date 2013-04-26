@@ -281,11 +281,26 @@ def spy_targets_timeline(twitter_api, session, timeline_kwargs):
     the database
     """
 
-    timeline_json = twitter_api.statuses.user_timeline(**timeline_kwargs)
+    backoff = 1
+    max_backoff = 4
+    success = False
+    while not success:
+        try:
+            timeline_json = twitter_api.statuses.user_timeline(
+                    **timeline_kwargs)
+            success = True
+        except TwitterHTTPError as e:
+            if backoff > max_backoff:
+                print('Timeline retrieval failed.')
+                pprint(e)
+                return 0
+            wait_time = backoff * 60 * 3
+            print('Could not retrieve timeline. Waiting {} minutes.'.format(
+                wait_time))
+
     timeline_len = len(timeline_json)
     if timeline_len:
         timeline = create_timeline_pyobjs(timeline_json)
-
         hashtags = timeline['hashtags']
         media = timeline['media']
         tweets = timeline['tweets']
