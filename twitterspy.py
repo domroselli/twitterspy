@@ -19,8 +19,8 @@ from sqlalchemy.orm import sessionmaker
 from pprint import pprint
 from time import sleep
 
-CONSUMER_KEY = 'uS6hO2sV6tDKIOeVjhnFnQ'
-CONSUMER_SECRET = 'MEYTOS97VvlHX7K1rwHPEqVpTSqZ71HtvoK4sVuYk'
+CONSUMER_KEY = ''
+CONSUMER_SECRET = ''
 
 API_VERSION = "1.1"
 API_DOMAIN = "api.twitter.com"
